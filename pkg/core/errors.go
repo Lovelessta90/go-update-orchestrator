@@ -15,6 +15,9 @@ var (
 	// ErrDeliveryFailed indicates the delivery mechanism failed.
 	ErrDeliveryFailed = errors.New("delivery failed")
 
+	// ErrVerificationFailed indicates update verification failed.
+	ErrVerificationFailed = errors.New("verification failed")
+
 	// ErrInvalidDevice indicates device validation failed.
 	ErrInvalidDevice = errors.New("invalid device")
 
