@@ -1,0 +1,142 @@
+[
+  {
+    "id": "pos-nyc-001",
+    "name": "Times Square Store - Terminal 1",
+    "address": "https://pos-nyc-001.retailcorp.com:8443",
+    "status": "online",
+    "firmware_version": "2.3.1",
+    "location": "New York, NY",
+    "metadata": {
+      "store_id": "NYC-001",
+      "region": "northeast",
+      "type": "flagship",
+      "priority": "high"
+    }
+  },
+  {
+    "id": "pos-nyc-002",
+    "name": "Times Square Store - Terminal 2",
+    "address": "https://pos-nyc-002.retailcorp.com:8443",
+    "status": "online",
+    "firmware_version": "2.3.1",
+    "location": "New York, NY",
+    "metadata": {
+      "store_id": "NYC-001",
+      "region": "northeast",
+      "type": "flagship",
+      "priority": "high"
+    }
+  },
+  {
+    "id": "pos-la-001",
+    "name": "Hollywood Store - Terminal 1",
+    "address": "https://pos-la-001.retailcorp.com:8443",
+    "status": "offline",
+    "firmware_version": "2.2.5",
+    "location": "Los Angeles, CA",
+    "metadata": {
+      "store_id": "LA-001",
+      "region": "west",
+      "type": "standard",
+      "priority": "medium"
+    }
+  },
+  {
+    "id": "pos-chicago-001",
+    "name": "Michigan Avenue - Terminal 1",
+    "address": "https://pos-chicago-001.retailcorp.com:8443",
+    "status": "online",
+    "firmware_version": "2.1.0",
+    "location": "Chicago, IL",
+    "metadata": {
+      "store_id": "CHI-001",
+      "region": "midwest",
+      "type": "standard",
+      "priority": "medium"
+    }
+  },
+  {
+    "id": "pos-chicago-002",
+    "name": "Michigan Avenue - Terminal 2",
+    "address": "https://pos-chicago-002.retailcorp.com:8443",
+    "status": "online",
+    "firmware_version": "2.1.0",
+    "location": "Chicago, IL",
+    "metadata": {
+      "store_id": "CHI-001",
+      "region": "midwest",
+      "type": "standard",
+      "priority": "medium"
+    }
+  },
+  {
+    "id": "pos-miami-001",
+    "name": "South Beach Store",
+    "address": "https://pos-miami-001.retailcorp.com:8443",
+    "status": "offline",
+    "firmware_version": "2.3.0",
+    "location": "Miami, FL",
+    "metadata": {
+      "store_id": "MIA-001",
+      "region": "southeast",
+      "type": "seasonal",
+      "priority": "low"
+    }
+  },
+  {
+    "id": "pos-seattle-001",
+    "name": "Pike Place - Terminal 1",
+    "address": "https://pos-seattle-001.retailcorp.com:8443",
+    "status": "unknown",
+    "firmware_version": "2.0.5",
+    "location": "Seattle, WA",
+    "metadata": {
+      "store_id": "SEA-001",
+      "region": "northwest",
+      "type": "standard",
+      "priority": "medium"
+    }
+  },
+  {
+    "id": "pos-austin-001",
+    "name": "Downtown Austin",
+    "address": "https://pos-austin-001.retailcorp.com:8443",
+    "status": "online",
+    "firmware_version": "2.3.1",
+    "location": "Austin, TX",
+    "metadata": {
+      "store_id": "AUS-001",
+      "region": "southwest",
+      "type": "standard",
+      "priority": "medium"
+    }
+  },
+  {
+    "id": "pos-boston-001",
+    "name": "Newbury Street",
+    "address": "https://pos-boston-001.retailcorp.com:8443",
+    "status": "online",
+    "firmware_version": "2.2.8",
+    "location": "Boston, MA",
+    "metadata": {
+      "store_id": "BOS-001",
+      "region": "northeast",
+      "type": "flagship",
+      "priority": "high"
+    }
+  },
+  {
+    "id": "pos-denver-001",
+    "name": "16th Street Mall",
+    "address": "https://pos-denver-001.retailcorp.com:8443",
+    "status": "offline",
+    "firmware_version": "2.1.5",
+    "location": "Denver, CO",
+    "metadata": {
+      "store_id": "DEN-001",
+      "region": "mountain",
+      "type": "standard",
+      "priority": "low"
+    }
+  }
+]
