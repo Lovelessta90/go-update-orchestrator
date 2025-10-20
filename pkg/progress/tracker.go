@@ -44,3 +44,26 @@ type DeviceProgress struct {
 	EndTime          *time.Time
 	Error            error
 }
+
+// EventType represents the type of progress event.
+type EventType string
+
+const (
+	EventUpdateStarted   EventType = "update_started"
+	EventUpdateCompleted EventType = "update_completed"
+	EventDeviceUpdated   EventType = "device_updated"
+)
+
+// Event represents a progress event.
+type Event struct {
+	Type     EventType
+	UpdateID string
+	DeviceID string
+	Time     time.Time
+	Data     map[string]interface{}
+}
+
+// Publisher defines the interface for publishing progress events.
+type Publisher interface {
+	Publish(ctx context.Context, event Event)
+}
