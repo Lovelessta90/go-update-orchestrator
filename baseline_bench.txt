@@ -1,0 +1,8 @@
+goos: linux
+goarch: amd64
+pkg: github.com/dovaclean/go-update-orchestrator/pkg/delivery/http
+cpu: Intel(R) Core(TM) i7-10700F CPU @ 2.90GHz
+BenchmarkPush-16      	   67004	     49598 ns/op	    7431 B/op	      88 allocs/op
+BenchmarkVerify-16    	   30939	    118537 ns/op	   17900 B/op	     126 allocs/op
+PASS
+ok  	github.com/dovaclean/go-update-orchestrator/pkg/delivery/http	10.720s

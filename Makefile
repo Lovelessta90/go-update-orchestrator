@@ -14,7 +14,11 @@ help:
 	@echo "  make test-verbose       - Run tests with verbose output"
 	@echo "  make test-unit          - Run unit tests only"
 	@echo "  make test-integration   - Run integration tests only"
+	@echo ""
+	@echo "Benchmark Commands:"
 	@echo "  make bench              - Run benchmarks"
+	@echo "  make bench-baseline     - Run baseline benchmarks (3s, save to file)"
+	@echo "  make bench-compare      - Compare current vs baseline (requires benchstat)"
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make lint               - Run linters"
@@ -61,6 +65,25 @@ test-integration:
 bench:
 	@echo "Running benchmarks..."
 	@go test -bench=. -benchmem ./...
+
+bench-baseline:
+	@echo "Running baseline benchmarks (3 second runs)..."
+	@echo "Results will be saved to baseline_bench.txt"
+	@go test -bench=. -benchmem -benchtime=3s ./pkg/delivery/http/ | tee baseline_bench.txt
+
+bench-compare:
+	@echo "Running benchmarks for comparison..."
+	@echo "Comparing against baseline_bench.txt"
+	@go test -bench=. -benchmem -benchtime=3s ./pkg/delivery/http/ > current_bench.txt
+	@if command -v benchstat >/dev/null 2>&1; then \
+		benchstat baseline_bench.txt current_bench.txt; \
+	else \
+		echo ""; \
+		echo "benchstat not installed. Install with:"; \
+		echo "  go install golang.org/x/perf/cmd/benchstat@latest"; \
+		echo ""; \
+		echo "Current results saved to current_bench.txt"; \
+	fi
 
 # Code quality targets
 lint:

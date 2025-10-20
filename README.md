@@ -2,6 +2,12 @@
 
 **Efficiently push software/firmware updates to thousands of devices concurrently with proper orchestration, progress tracking, and failure handling.**
 
+> **🤖 AI-Generated Baseline**
+>
+> This codebase was generated as a **baseline implementation** by Claude Code (Claude Sonnet 4.5, model: `claude-sonnet-4-5-20250929`) on October 20, 2025. The purpose is to establish a functional, well-tested foundation that can be optimized and improved upon.
+>
+> **Baseline Metrics**: See [BASELINE_METRICS.md](BASELINE_METRICS.md) for performance benchmarks to compare against future optimizations.
+
 ## Overview
 
 Go Update Orchestrator is a lightweight, high-performance tool for managing large-scale device updates. Built for companies managing fleets of devices (POS systems, IoT devices, digital signage, vehicles, medical equipment), it replaces vendor-locked tools and brittle bash scripts with a robust, portable solution.

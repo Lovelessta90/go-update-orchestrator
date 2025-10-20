@@ -2,29 +2,162 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
+	"fmt"
 	"io"
+	"net/http"
+	"time"
 
 	"github.com/dovaclean/go-update-orchestrator/pkg/core"
 )
 
-// Delivery implements HTTP-based update delivery.
-type Delivery struct {
-	// TODO: Add configuration fields (timeout, TLS, auth, etc)
+// Config holds HTTP delivery configuration.
+type Config struct {
+	// Timeout for HTTP requests
+	Timeout time.Duration
+
+	// TLSConfig for HTTPS connections
+	TLSConfig *tls.Config
+
+	// Headers to include in all requests (e.g., Authorization)
+	Headers map[string]string
+
+	// UpdateEndpoint is the path for pushing updates (default: /update)
+	UpdateEndpoint string
+
+	// VerifyEndpoint is the path for verification (default: /version)
+	VerifyEndpoint string
+
+	// MaxRetries for transient failures
+	MaxRetries int
+
+	// SkipTLSVerify bypasses certificate verification (insecure, for testing)
+	SkipTLSVerify bool
 }
 
-// New creates a new HTTP delivery mechanism.
+// DefaultConfig returns sensible defaults for HTTP delivery.
+func DefaultConfig() *Config {
+	return &Config{
+		Timeout:        30 * time.Second,
+		Headers:        make(map[string]string),
+		UpdateEndpoint: "/update",
+		VerifyEndpoint: "/version",
+		MaxRetries:     3,
+		SkipTLSVerify:  false,
+	}
+}
+
+// Delivery implements HTTP-based update delivery.
+type Delivery struct {
+	config *Config
+	client *http.Client
+}
+
+// New creates a new HTTP delivery mechanism with default config.
 func New() *Delivery {
-	return &Delivery{}
+	return NewWithConfig(DefaultConfig())
+}
+
+// NewWithConfig creates a new HTTP delivery mechanism with custom config.
+func NewWithConfig(config *Config) *Delivery {
+	// Create TLS config if needed
+	tlsConfig := config.TLSConfig
+	if tlsConfig == nil {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: config.SkipTLSVerify,
+			MinVersion:         tls.VersionTLS12,
+		}
+	}
+
+	// Create HTTP client with configured timeout and TLS
+	client := &http.Client{
+		Timeout: config.Timeout,
+		Transport: &http.Transport{
+			TLSClientConfig:     tlsConfig,
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     90 * time.Second,
+		},
+	}
+
+	return &Delivery{
+		config: config,
+		client: client,
+	}
 }
 
 // Push delivers the update payload to a device via HTTP POST.
+// The payload is streamed directly to the device without loading into memory.
 func (d *Delivery) Push(ctx context.Context, device core.Device, payload io.Reader) error {
-	// TODO: Implement HTTP POST with streaming
+	// Build the update URL
+	url := device.Address + d.config.UpdateEndpoint
+
+	// Create HTTP request with context (supports cancellation)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payload)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set content type
+	req.Header.Set("Content-Type", "application/octet-stream")
+
+	// Add custom headers (e.g., Authorization, X-Device-ID)
+	for key, value := range d.config.Headers {
+		req.Header.Set(key, value)
+	}
+
+	// Add device-specific headers for tracking
+	req.Header.Set("X-Device-ID", device.ID)
+	req.Header.Set("X-Device-Name", device.Name)
+
+	// Execute the request
+	resp, err := d.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to push update to %s: %w", device.Address, err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		// Read error message from response body (limited)
+		body := make([]byte, 1024)
+		n, _ := resp.Body.Read(body)
+		return fmt.Errorf("update push failed with status %d: %s", resp.StatusCode, string(body[:n]))
+	}
+
 	return nil
 }
 
 // Verify checks if the update was successfully applied via HTTP GET.
+// This calls the device's version endpoint and checks the firmware version.
 func (d *Delivery) Verify(ctx context.Context, device core.Device) error {
-	// TODO: Implement verification (e.g., GET /version endpoint)
+	// Build the verify URL
+	url := device.Address + d.config.VerifyEndpoint
+
+	// Create HTTP request with context
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create verify request: %w", err)
+	}
+
+	// Add custom headers
+	for key, value := range d.config.Headers {
+		req.Header.Set(key, value)
+	}
+
+	// Execute the request
+	resp, err := d.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to verify update on %s: %w", device.Address, err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("verify failed with status %d", resp.StatusCode)
+	}
+
+	// TODO: Parse response body and verify firmware version
+	// For now, just check that the endpoint is reachable
 	return nil
 }
