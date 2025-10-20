@@ -424,3 +424,181 @@ func ExampleNewWithConfig() {
 		fmt.Printf("verification failed: %v\n", err)
 	}
 }
+
+// TestPush_RetryOn5xx tests that 5xx errors are retried
+func TestPush_RetryOn5xx(t *testing.T) {
+	attemptCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptCount++
+
+		// Fail first 2 attempts, succeed on 3rd
+		if attemptCount <= 2 {
+			w.WriteHeader(http.StatusServiceUnavailable) // 503
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer server.Close()
+
+	delivery := New() // Default config has 3 retries
+	device := core.Device{
+		ID:      "test-device",
+		Address: server.URL,
+	}
+
+	ctx := context.Background()
+	payload := strings.NewReader("test payload")
+
+	err := delivery.Push(ctx, device, payload)
+
+	if err != nil {
+		t.Fatalf("Expected success after retries, got error: %v", err)
+	}
+
+	if attemptCount != 3 {
+		t.Errorf("Expected 3 attempts, got %d", attemptCount)
+	}
+}
+
+// TestPush_NoRetryOn4xx tests that 4xx errors are NOT retried
+func TestPush_NoRetryOn4xx(t *testing.T) {
+	attemptCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptCount++
+		w.WriteHeader(http.StatusBadRequest) // 400 - client error
+	}))
+	defer server.Close()
+
+	delivery := New()
+	device := core.Device{
+		ID:      "test-device",
+		Address: server.URL,
+	}
+
+	ctx := context.Background()
+	payload := strings.NewReader("test payload")
+
+	err := delivery.Push(ctx, device, payload)
+
+	if err == nil {
+		t.Fatal("Expected error for 4xx response")
+	}
+
+	// Should NOT retry - only 1 attempt
+	if attemptCount != 1 {
+		t.Errorf("Expected 1 attempt (no retry on 4xx), got %d", attemptCount)
+	}
+}
+
+// TestPush_RetryExhaustion tests that retries eventually give up
+func TestPush_RetryExhaustion(t *testing.T) {
+	attemptCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptCount++
+		w.WriteHeader(http.StatusServiceUnavailable) // Always fail
+	}))
+	defer server.Close()
+
+	delivery := New() // Default: 3 attempts
+	device := core.Device{
+		ID:      "test-device",
+		Address: server.URL,
+	}
+
+	ctx := context.Background()
+	payload := strings.NewReader("test payload")
+
+	err := delivery.Push(ctx, device, payload)
+
+	if err == nil {
+		t.Fatal("Expected error after retry exhaustion")
+	}
+
+	if attemptCount != 3 {
+		t.Errorf("Expected 3 attempts, got %d", attemptCount)
+	}
+}
+
+// TestPush_RetryWithSeeker tests that seekable payloads can be retried
+func TestPush_RetryWithSeeker(t *testing.T) {
+	attemptCount := 0
+	receivedData := make([]string, 0)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptCount++
+
+		// Read the payload
+		data, _ := io.ReadAll(r.Body)
+		receivedData = append(receivedData, string(data))
+
+		// Fail first attempt, succeed on second
+		if attemptCount == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer server.Close()
+
+	delivery := New()
+	device := core.Device{
+		ID:      "test-device",
+		Address: server.URL,
+	}
+
+	ctx := context.Background()
+	// strings.Reader implements io.Seeker, so retries will work
+	payload := strings.NewReader("seekable payload")
+
+	err := delivery.Push(ctx, device, payload)
+
+	if err != nil {
+		t.Fatalf("Expected success with seekable payload, got: %v", err)
+	}
+
+	if attemptCount != 2 {
+		t.Errorf("Expected 2 attempts, got %d", attemptCount)
+	}
+
+	// Both attempts should receive the same data (payload was reset)
+	if len(receivedData) != 2 {
+		t.Errorf("Expected 2 received payloads, got %d", len(receivedData))
+	}
+
+	if receivedData[0] != "seekable payload" || receivedData[1] != "seekable payload" {
+		t.Errorf("Payload not reset correctly: %v", receivedData)
+	}
+}
+
+// TestPush_CustomRetryConfig tests custom retry configuration
+func TestPush_CustomRetryConfig(t *testing.T) {
+	attemptCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptCount++
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+
+	// Custom config with 5 retries
+	config := DefaultConfig()
+	config.MaxRetries = 5
+
+	delivery := NewWithConfig(config)
+	device := core.Device{
+		ID:      "test-device",
+		Address: server.URL,
+	}
+
+	ctx := context.Background()
+	payload := strings.NewReader("test payload")
+
+	err := delivery.Push(ctx, device, payload)
+
+	if err == nil {
+		t.Fatal("Expected error after retry exhaustion")
+	}
+
+	if attemptCount != 5 {
+		t.Errorf("Expected 5 attempts (custom config), got %d", attemptCount)
+	}
+}

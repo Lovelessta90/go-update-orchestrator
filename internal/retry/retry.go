@@ -2,9 +2,29 @@ package retry
 
 import (
 	"context"
+	"errors"
 	"math"
 	"time"
 )
+
+// NonRetryable wraps an error to indicate it should not be retried
+type NonRetryable struct {
+	Err error
+}
+
+func (e *NonRetryable) Error() string {
+	return e.Err.Error()
+}
+
+func (e *NonRetryable) Unwrap() error {
+	return e.Err
+}
+
+// IsNonRetryable checks if an error is non-retryable
+func IsNonRetryable(err error) bool {
+	var nonRetryable *NonRetryable
+	return errors.As(err, &nonRetryable)
+}
 
 // Config holds retry configuration.
 type Config struct {
@@ -25,6 +45,7 @@ func DefaultConfig() *Config {
 }
 
 // Do executes a function with exponential backoff retry logic.
+// If the function returns a NonRetryable error, it will not be retried.
 func Do(ctx context.Context, config *Config, fn func() error) error {
 	var lastErr error
 
@@ -34,6 +55,11 @@ func Do(ctx context.Context, config *Config, fn func() error) error {
 			return nil
 		} else {
 			lastErr = err
+
+			// Check if error is non-retryable
+			if IsNonRetryable(err) {
+				return err
+			}
 		}
 
 		// Don't sleep after the last attempt
