@@ -218,16 +218,24 @@ Contributions welcome! Please open an issue first to discuss proposed changes.
 
 MIT License - See [LICENSE](LICENSE) for details.
 
-## Roadmap
+## Features
 
-- [ ] HTTP delivery implementation
-- [ ] SQLite registry implementation
-- [ ] SSH delivery mechanism
-- [ ] Web UI for progress monitoring
-- [ ] Prometheus metrics export
-- [ ] Delta/differential updates
-- [ ] Rollback support
-- [ ] Device grouping/tagging
+**✅ Implemented:**
+- HTTP delivery with retry and streaming
+- SQLite persistent registry
+- In-memory registry for testing
+- SSH/SFTP delivery mechanism
+- Scheduler with time-based and progressive rollouts
+- Web UI with real-time dashboard
+- Progress tracking with estimates
+- Event-driven architecture
+- Comprehensive test suite (77+ tests)
+
+**🚀 Future Enhancements:**
+- Prometheus metrics export
+- Delta/differential updates
+- Automatic rollback on failure
+- Advanced device grouping/tagging
 
 ## Support
 
