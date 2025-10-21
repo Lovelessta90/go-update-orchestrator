@@ -1,0 +1,21 @@
+{{define "content"}}
+<div class="table-container">
+    <table id="devices-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Firmware</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="6" class="loading">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="module" src="/static/js/devices.js"></script>
+{{end}}

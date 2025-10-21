@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/dovaclean/go-update-orchestrator/pkg/core"
@@ -40,7 +41,7 @@ func main() {
 	config := orchestrator.DefaultConfig()
 	config.MaxConcurrent = 2 // Update 2 devices at a time
 
-	orch, err := orchestrator.New(config, registry, delivery)
+	orch, err := orchestrator.NewDefault(config, registry, delivery)
 	if err != nil {
 		log.Fatalf("Failed to create orchestrator: %v", err)
 	}
@@ -58,24 +59,37 @@ func main() {
 		fmt.Printf("[EVENT] Update completed: %s\n", event.UpdateID)
 	}))
 
-	// Create update job
+	// Create update job with device filter
+	filter := core.Filter{} // Empty filter matches all devices
 	update := core.Update{
-		ID:         "update-001",
-		Name:       "Firmware v2.0",
-		PayloadURL: "https://updates.example.com/firmware-v2.0.bin",
-		DeviceIDs:  []string{"device-1", "device-2", "device-3"},
-		CreatedAt:  time.Now(),
+		ID:           "update-001",
+		Name:         "Firmware v2.0",
+		DeviceFilter: &filter,
+		CreatedAt:    time.Now(),
 	}
 
+	// Create mock firmware payload
+	payload := strings.NewReader("Mock firmware v2.0 binary data...")
+
 	fmt.Printf("\nExecuting update: %s\n", update.Name)
-	fmt.Printf("Target devices: %d\n", len(update.DeviceIDs))
+	fmt.Printf("Target devices: All devices matching filter\n")
 	fmt.Printf("Max concurrent: %d\n\n", config.MaxConcurrent)
 
-	// Execute update (this would actually run in real implementation)
-	if err := orch.ExecuteUpdate(ctx, update); err != nil {
+	// Execute update with payload
+	if err := orch.ExecuteUpdateWithPayload(ctx, update, payload); err != nil {
 		log.Fatalf("Update failed: %v", err)
 	}
 
-	fmt.Println("\nUpdate execution initiated successfully!")
-	fmt.Println("\nNote: This is a skeleton example. Full implementation coming soon.")
+	// Get final status
+	status, err := orch.GetStatus(ctx, update.ID)
+	if err != nil {
+		log.Fatalf("Failed to get status: %v", err)
+	}
+
+	fmt.Println("\n=== Update Complete ===")
+	fmt.Printf("Status: %s\n", status.Status)
+	fmt.Printf("Total Devices: %d\n", status.TotalDevices)
+	fmt.Printf("Completed: %d\n", status.Completed)
+	fmt.Printf("Failed: %d\n", status.Failed)
+	fmt.Printf("Duration: %v\n", time.Since(status.StartedAt))
 }
