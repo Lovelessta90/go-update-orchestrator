@@ -1,0 +1,23 @@
+{{define "content"}}
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Devices</h3>
+        <div class="stat-value" id="total-devices">-</div>
+    </div>
+    <div class="stat-card">
+        <h3>Online Devices</h3>
+        <div class="stat-value" id="online-devices">-</div>
+    </div>
+    <div class="stat-card">
+        <h3>Active Updates</h3>
+        <div class="stat-value" id="active-updates">-</div>
+    </div>
+</div>
+
+<div class="recent-updates">
+    <h2>Recent Updates</h2>
+    <div id="recent-updates" class="loading">Loading...</div>
+</div>
+
+<script type="module" src="/static/js/dashboard.js"></script>
+{{end}}

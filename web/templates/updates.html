@@ -1,0 +1,21 @@
+{{define "content"}}
+<div class="table-container">
+    <table id="updates-table">
+        <thead>
+            <tr>
+                <th>Update ID</th>
+                <th>Status</th>
+                <th>Total Devices</th>
+                <th>Completed</th>
+                <th>Failed</th>
+                <th>Progress</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="6" class="loading">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="module" src="/static/js/updates.js"></script>
+{{end}}

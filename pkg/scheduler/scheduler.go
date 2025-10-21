@@ -214,6 +214,30 @@ func (s *Scheduler) List(ctx context.Context, status core.UpdateStatus) ([]core.
 	return results, nil
 }
 
+// ListAll returns all updates regardless of status.
+func (s *Scheduler) ListAll(ctx context.Context) ([]core.Status, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	results := make([]core.Status, 0, len(s.updates))
+	for id, scheduled := range s.updates {
+		// Get full status from orchestrator if available
+		status, err := s.orchestrator.GetStatus(ctx, id)
+		if err != nil {
+			// If orchestrator doesn't have it, use what we know
+			results = append(results, core.Status{
+				UpdateID:  id,
+				Status:    scheduled.status,
+				StartedAt: scheduled.createdAt,
+			})
+		} else {
+			results = append(results, *status)
+		}
+	}
+
+	return results, nil
+}
+
 // run is the main scheduler loop.
 func (s *Scheduler) run(ctx context.Context) {
 	defer s.wg.Done()

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Update Orchestrator</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>🚀 Update Orchestrator</h1>
+            <nav class="nav">
+                <a href="/" {{if eq .Page "dashboard"}}class="active"{{end}}>Dashboard</a>
+                <a href="/devices" {{if eq .Page "devices"}}class="active"{{end}}>Devices</a>
+                <a href="/updates" {{if eq .Page "updates"}}class="active"{{end}}>Updates</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        {{template "content" .}}
+    </main>
+</body>
+</html>
