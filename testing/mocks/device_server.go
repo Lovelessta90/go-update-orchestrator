@@ -19,6 +19,7 @@ type DeviceServer struct {
 	lastUpdateTime  time.Time
 	lastUpdateSize  int64
 	failNext        bool // Simulate failure on next update
+	alwaysFail      bool // Always fail all updates
 }
 
 // VersionResponse is the JSON response from /version endpoint.
@@ -54,7 +55,13 @@ func NewDeviceServer(initialVersion string) *DeviceServer {
 		ds.mu.Lock()
 		defer ds.mu.Unlock()
 
-		// Simulate failure if configured
+		// Simulate permanent failure if configured
+		if ds.alwaysFail {
+			http.Error(w, "Simulated update failure", http.StatusInternalServerError)
+			return
+		}
+
+		// Simulate failure if configured (one-time)
 		if ds.failNext {
 			ds.failNext = false
 			http.Error(w, "Simulated update failure", http.StatusInternalServerError)
@@ -162,6 +169,13 @@ func (ds *DeviceServer) SetFailNext(fail bool) {
 	ds.failNext = fail
 }
 
+// SetAlwaysFail configures the server to always fail updates.
+func (ds *DeviceServer) SetAlwaysFail(fail bool) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.alwaysFail = fail
+}
+
 // Reset resets the server state.
 func (ds *DeviceServer) Reset() {
 	ds.mu.Lock()
@@ -170,6 +184,7 @@ func (ds *DeviceServer) Reset() {
 	ds.lastUpdateSize = 0
 	ds.lastUpdateTime = time.Time{}
 	ds.failNext = false
+	ds.alwaysFail = false
 }
 
 // MultiDeviceServer manages multiple mock device servers.
