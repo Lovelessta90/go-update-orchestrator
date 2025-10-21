@@ -240,7 +240,13 @@ func main() {
 	// Start web UI
 	fmt.Println("\n🌐 Starting Web UI...")
 	webConfig := web.DefaultConfig()
-	webConfig.Address = ":8081"
+
+	// Allow port customization via environment variable
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8081"
+	}
+	webConfig.Address = ":" + port
 
 	server, err := web.New(webConfig, orch, sched, reg)
 	if err != nil {
@@ -260,9 +266,9 @@ func main() {
 	fmt.Println(separator())
 	fmt.Println()
 	fmt.Println("🌐 Web Interface:")
-	fmt.Println("   Dashboard:  http://localhost:8081")
-	fmt.Println("   Devices:    http://localhost:8081/devices")
-	fmt.Println("   Updates:    http://localhost:8081/updates")
+	fmt.Printf("   Dashboard:  http://localhost:%s\n", port)
+	fmt.Printf("   Devices:    http://localhost:%s/devices\n", port)
+	fmt.Printf("   Updates:    http://localhost:%s/updates\n", port)
 	fmt.Println()
 	fmt.Println("📡 API Endpoints:")
 	fmt.Println("   GET  /api/devices         - List all devices")
