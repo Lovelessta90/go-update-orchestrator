@@ -62,3 +62,6 @@ logs/
 *_bench.txt
 baseline_bench.txt
 current_bench.txt
+
+# Development notes (internal documentation)
+.dev-notes/
