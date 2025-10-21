@@ -63,13 +63,33 @@ Go Update Orchestrator is a lightweight, high-performance tool for managing larg
 
 ## Quick Start
 
-### Installation
+### Try the Demo
 
 ```bash
-go install github.com/dovaclean/go-update-orchestrator/cmd/orchestrator@latest
+# Clone the repository
+git clone https://github.com/dovaclean/go-update-orchestrator
+cd go-update-orchestrator
+
+# Run the interactive demo with web UI
+make demo
 ```
 
-### Basic Usage
+Open **http://localhost:8081** to see the orchestrator in action with a live dashboard showing devices and update progress!
+
+**Custom Port:** If port 8081 is in use, specify a different port:
+```bash
+PORT=3000 make demo    # Use port 3000 instead
+```
+
+### Library Installation
+
+This is primarily a **Go library**. To use it in your own project:
+
+```bash
+go get github.com/dovaclean/go-update-orchestrator
+```
+
+### Basic Usage (as a library)
 
 ```go
 package main
