@@ -11,8 +11,8 @@ import (
 
 	"github.com/dovaclean/go-update-orchestrator/pkg/core"
 	httpdelivery "github.com/dovaclean/go-update-orchestrator/pkg/delivery/http"
-	sshdelivery "github.com/dovaclean/go-update-orchestrator/pkg/delivery/ssh"
 	"github.com/dovaclean/go-update-orchestrator/pkg/orchestrator"
+	"github.com/dovaclean/go-update-orchestrator/pkg/registry"
 	"github.com/dovaclean/go-update-orchestrator/pkg/registry/memory"
 	"github.com/dovaclean/go-update-orchestrator/pkg/registry/sqlite"
 	"github.com/dovaclean/go-update-orchestrator/pkg/scheduler"
@@ -28,10 +28,9 @@ func main() {
 
 	// Choose registry type (SQLite for persistence, Memory for testing)
 	useSQLite := false // Set to true to use SQLite persistence
-	var reg interface {
-		core.Registry
-		interface{ Close() error }
-	}
+
+	var reg registry.Registry
+	var cleanup func() error
 
 	if useSQLite {
 		fmt.Println("📦 Initializing SQLite registry...")
@@ -40,20 +39,15 @@ func main() {
 			log.Fatalf("Failed to create SQLite registry: %v", err)
 		}
 		reg = sqliteReg
-		defer reg.Close()
+		cleanup = sqliteReg.Close
 		fmt.Println("   ✓ SQLite registry initialized (orchestrator.db)")
 	} else {
 		fmt.Println("📦 Initializing in-memory registry...")
-		memReg := memory.New()
-		reg = struct {
-			core.Registry
-			interface{ Close() error }
-		}{
-			Registry: memReg,
-			Close:    func() error { return nil },
-		}
+		reg = memory.New()
+		cleanup = func() error { return nil }
 		fmt.Println("   ✓ Memory registry initialized")
 	}
+	defer cleanup()
 
 	// Add sample devices
 	fmt.Println("\n📱 Adding sample devices...")
@@ -246,7 +240,7 @@ func main() {
 	// Start web UI
 	fmt.Println("\n🌐 Starting Web UI...")
 	webConfig := web.DefaultConfig()
-	webConfig.Address = ":8080"
+	webConfig.Address = ":8081"
 
 	server, err := web.New(webConfig, orch, sched, reg)
 	if err != nil {
@@ -266,9 +260,9 @@ func main() {
 	fmt.Println(separator())
 	fmt.Println()
 	fmt.Println("🌐 Web Interface:")
-	fmt.Println("   Dashboard:  http://localhost:8080")
-	fmt.Println("   Devices:    http://localhost:8080/devices")
-	fmt.Println("   Updates:    http://localhost:8080/updates")
+	fmt.Println("   Dashboard:  http://localhost:8081")
+	fmt.Println("   Devices:    http://localhost:8081/devices")
+	fmt.Println("   Updates:    http://localhost:8081/updates")
 	fmt.Println()
 	fmt.Println("📡 API Endpoints:")
 	fmt.Println("   GET  /api/devices         - List all devices")
@@ -297,7 +291,9 @@ func main() {
 	fmt.Println("   ✓ Stopping scheduler...")
 	sched.Stop()
 	fmt.Println("   ✓ Closing registry...")
-	reg.Close()
+	if err := cleanup(); err != nil {
+		log.Printf("Warning: Failed to close registry: %v", err)
+	}
 	fmt.Println("\n👋 Goodbye!")
 }
 
