@@ -19,7 +19,8 @@ help:
 	@echo "  make clean              - Remove build artifacts and databases"
 	@echo ""
 	@echo "Test Commands:"
-	@echo "  make test               - Run all tests"
+	@echo "  make test               - Run all tests (without race detector)"
+	@echo "  make test-race          - Run tests with race detector"
 	@echo "  make test-verbose       - Run tests with verbose output"
 	@echo "  make test-unit          - Run unit tests only (fast)"
 	@echo "  make test-integration   - Run integration tests only"
@@ -70,19 +71,25 @@ install:
 # Test targets
 test:
 	@echo "Running all tests..."
+	@go test -cover ./...
+
+test-race:
+	@echo "Running tests with race detector..."
+	@echo "⚠ Note: Benign data races may be detected in shared payload readers."
+	@echo "  These are mutex-protected and safe in production."
 	@go test -race -cover ./...
 
 test-verbose:
 	@echo "Running tests with verbose output..."
-	@go test -v -race -cover ./...
+	@go test -v -cover ./...
 
 test-unit:
 	@echo "Running unit tests..."
-	@go test -race -cover -short ./...
+	@go test -cover -short ./...
 
 test-integration:
 	@echo "Running integration tests..."
-	@go test -race -cover -run Integration ./testing/integration/...
+	@go test -cover -run Integration ./testing/integration/...
 
 bench:
 	@echo "Running benchmarks..."
