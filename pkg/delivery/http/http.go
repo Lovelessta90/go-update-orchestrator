@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/dovaclean/go-update-orchestrator/internal/retry"
@@ -50,6 +51,26 @@ func DefaultConfig() *Config {
 		MaxRetries:     3,
 		SkipTLSVerify:  false,
 	}
+}
+
+// safeSeeker wraps an io.ReadSeeker with a mutex for thread-safe operations.
+// This is needed when the same payload is shared across multiple goroutines.
+// Both Read and Seek must be protected to avoid races.
+type safeSeeker struct {
+	rs io.ReadSeeker
+	mu sync.Mutex
+}
+
+func (s *safeSeeker) Read(p []byte) (n int, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.rs.Read(p)
+}
+
+func (s *safeSeeker) Seek(offset int64, whence int) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.rs.Seek(offset, whence)
 }
 
 // Delivery implements HTTP-based update delivery.
@@ -106,8 +127,21 @@ func NewWithConfig(config *Config) *Delivery {
 func (d *Delivery) Push(ctx context.Context, device core.Device, payload io.Reader) error {
 	url := device.Address + d.config.UpdateEndpoint
 
-	// Check if payload supports seeking (required for retries)
-	seeker, canSeek := payload.(io.Seeker)
+	// Wrap seekable payloads in a thread-safe wrapper for concurrent access
+	var seeker io.Seeker
+	var canSeek bool
+
+	if rs, ok := payload.(io.ReadSeeker); ok {
+		// Wrap in thread-safe seeker to prevent race conditions
+		// when the same payload is used by multiple goroutines
+		safe := &safeSeeker{rs: rs}
+		payload = safe
+		seeker = safe
+		canSeek = true
+	} else if s, ok := payload.(io.Seeker); ok {
+		seeker = s
+		canSeek = true
+	}
 
 	// Wrap the push logic for retry
 	return retry.Do(ctx, d.retryConfig, func() error {

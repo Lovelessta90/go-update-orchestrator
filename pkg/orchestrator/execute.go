@@ -126,13 +126,8 @@ func (o *Orchestrator) updateDevice(ctx context.Context, update core.Update, dev
 		},
 	})
 
-	// Reset payload to beginning for this device
-	if _, err := payload.Seek(0, io.SeekStart); err != nil {
-		o.handleDeviceFailure(ctx, update, device, err)
-		return err
-	}
-
 	// Push update to device
+	// Note: The delivery mechanism will handle seeking if retries are needed
 	err := o.delivery.Push(ctx, device, payload)
 
 	if err != nil {
